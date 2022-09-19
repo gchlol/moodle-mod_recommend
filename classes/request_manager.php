@@ -124,13 +124,13 @@ class mod_recommend_request_manager {
                 $email = $data->{'email'.$i};
                 $name = $data->{'name'.$i};
                 $requests = $this->get_requests();
-                foreach ($requests as $request) {
+/*                foreach ($requests as $request) {
                     if (strtolower($request->email) === strtolower($email)) {
                         \core\notification::add(get_string('error_emailduplicated', 'mod_recommend'),
                                 \core\output\notification::NOTIFY_ERROR);
                         continue 2;
                     }
-                }
+                }*/
                 $this->add_request($email, $name);
             }
         }
@@ -323,7 +323,7 @@ class mod_recommend_request_manager {
     }
 
     /**
-     * Can $USER iew the request
+     * Can $USER view the request
      * @return bool
      */
     public function can_view_requests() {
@@ -331,6 +331,14 @@ class mod_recommend_request_manager {
         return has_any_capability($caps, $this->cm->context);
     }
 
+    /**
+     * Can $USER view the request
+     * @return bool
+     */
+    public function can_view_staff_requests() {
+        $caps = ['mod/recommend:viewstaffdetails', 'mod/recommend:accept'];
+        return has_any_capability($caps, $this->cm->context);
+    }
     /**
      * Can $USER accept a request
      * @return bool
@@ -344,7 +352,7 @@ class mod_recommend_request_manager {
      * @return \html_table
      */
     public function get_all_requests_table() {
-        global $DB, $OUTPUT;
+        global $DB, $OUTPUT, $USER;
         $ufields = user_picture::fields('u', null, 'useridalias');
         $sql = "SELECT r.*, $ufields
                 FROM {recommend_request} r
@@ -393,6 +401,86 @@ class mod_recommend_request_manager {
                 $status = $OUTPUT->pix_icon('status'.$request->status,
                         get_string('status'.$request->status, 'recommend'), 'mod_recommend');
                 $cells[] = html_writer::link($url, $status);
+
+            }
+            while (count($cells) < $maxrequests + 1) {
+                $cells[] = '';
+            }
+            $table->data[] = new html_table_row($cells);
+        }
+
+        return $table;
+    }
+
+	    /**
+     * List of all requests
+     * @return \html_table
+     */
+    public function get_my_requests_table() {
+        global $DB, $OUTPUT, $USER;
+		
+        $ufields = user_picture::fields('u', null, 'useridalias');
+        $sql = "SELECT DISTINCT r.*, $ufields
+                FROM {recommend_request} r
+                JOIN {user} u ON u.id = r.userid
+				JOIN {user_info_data} lmid ON u.id=lmid.userid AND lmid.fieldid=28
+				JOIN {user_info_data} lmpid ON lmpid.data=lmid.data AND lmpid.fieldid=8 AND lmpid.userid=".$USER->id."
+                WHERE r.recommendid = :recommendid
+                ORDER BY r.userid, r.timerequested";
+        		$params['recommendid'] = $this->object->id;
+
+        $result = $DB->get_records_sql($sql, $params);
+        $data = [];
+        $maxrequests = 0;
+        foreach ($result as $record) {
+            if (!isset($data[$record->userid])) {
+                $user = user_picture::unalias($record, null, 'userid');
+                $data[$record->userid] = ['user' => $user,
+                    'fullname' => fullname($user), 'requests' => []];
+            }
+            $data[$record->userid]['requests'][] = $record;
+            $maxrequests = max($maxrequests, count($data[$record->userid]['requests']));
+        }
+
+        $enrolledusers = get_enrolled_users($this->cm->context, 'mod/recommend:request');
+        foreach ($enrolledusers as $user) {
+			$sql = "SELECT DISTINCT u.id
+			FROM {user} u
+			JOIN {user_info_data} lmid ON u.id=lmid.userid AND lmid.fieldid=28
+			JOIN {user_info_data} lmpid ON lmpid.data=lmid.data AND lmpid.fieldid=8 AND lmpid.userid=".$USER->id."
+			WHERE u.id=".$user->id;
+			$lmcheck = $DB->get_records_sql($sql);
+			if($lmcheck) {
+				if (!isset($data[$user->id])) {
+					$data[$user->id] = ['user' => $user,
+						'fullname' => fullname($user), 'requests' => []];
+				}
+			}
+		}
+        usort($data, function($a, $b) {
+            return strcmp($a['fullname'], $b['fullname']);
+        });
+
+        $table = new html_table();
+        $table->attributes['class'] = 'generaltable recommend-requests-all';
+        foreach ($data as $userdata) {
+            $profilelink = new moodle_url('/user/view.php',
+                ['id' => $userdata['user']->id, 'course' => $this->cm->course]);
+            $userpic = $OUTPUT->user_picture($userdata['user'],
+                ['courseid' => $this->cm->course, 'class' => 'profilepicture', 'size' => 35]);
+            $cells = [$userpic . $OUTPUT->spacer(['width' => 5]) . $userdata['fullname']];
+            foreach ($userdata['requests'] as $request) {
+                $url = new moodle_url('/mod/recommend/view.php', ['id' => $this->cm->id,
+                        'requestid' => $request->id, 'action' => 'viewrequest']);
+                $status = $OUTPUT->pix_icon('status'.$request->status,
+                        get_string('status'.$request->status, 'recommend'), 'mod_recommend');
+                // GCHLOL
+                if ($request->status == 5 && $USER->id != $request->userid && !has_capability('moodle/course:viewhiddensections', context_module::instance($this->cm->id))) {
+                    $cells[] = $status;
+
+                } else {
+                    $cells[] = html_writer::link($url, $status);
+                }
             }
             while (count($cells) < $maxrequests + 1) {
                 $cells[] = '';

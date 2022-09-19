@@ -88,10 +88,10 @@ class mod_recommend_add_request_form extends moodleform {
             if (preg_match('/^email\d+$/', $key) && strlen($value)) {
                 if (clean_param($value, PARAM_EMAIL) !== $value) {
                     $errors[$key] = get_string('error_emailnotvalid', 'mod_recommend');
-                } else if (in_array(strtolower($value), $emails)) {
+/*                } else if (in_array(strtolower($value), $emails)) {
                     $errors[$key] = get_string('error_emailused', 'mod_recommend');
-                } else if (in_array(strtolower($value), $newemails)) {
-                    $errors[$key] = get_string('error_emailduplicated', 'mod_recommend');
+/*                } else if (in_array(strtolower($value), $newemails)) {
+                    $errors[$key] = get_string('error_emailduplicated', 'mod_recommend');*/
                 } else {
                     $newemails[] = strtolower($value);
                 }

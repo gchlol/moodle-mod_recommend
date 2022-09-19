@@ -32,6 +32,7 @@ $string['acceptrecommendation'] = 'Accept';
 $string['addquestion'] = 'Add question';
 $string['addrequest'] = 'Request recommendation';
 $string['allrequests'] = 'All requests';
+$string['myrequests'] = 'My staff';
 $string['areyousure_delete_request'] = 'Are you sure you want to completely delete this recommendation request?';
 $string['areyousure_reject_recommendation'] = 'Are you sure you want to reject this recommendation?';
 $string['completiononlyaccepted'] = 'Count only accepted recommendations';
@@ -164,3 +165,8 @@ $string['typeradio'] = 'Collection of radio buttons';
 $string['typetextarea'] = 'Multiline text with editor';
 $string['typetextfield'] = 'Single line text field';
 $string['yourrecommendations'] = 'Your recommendations';
+
+// GCHLOL
+$string['yourreviewsinfo'] = '';
+$string['yourstaffinfo'] = '';
+$string['allrequestsinfo'] = '';

@@ -79,6 +79,16 @@ $capabilities = array(
         ),
     ),
 
+    'mod/recommend:viewstaffdetails' => array(
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'editingteacher' => CAP_ALLOW,
+            'teacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        ),
+    ),
     'mod/recommend:delete' => array(
         'riskbitmask' => RISK_DATALOSS,
         'captype' => 'write',

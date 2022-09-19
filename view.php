@@ -152,17 +152,31 @@ if ($action === 'addrequest') {
 } else {
     if ($table = $manager->get_requests_table()) {
         echo $OUTPUT->heading(get_string('yourrecommendations', 'mod_recommend'), 3);
+        echo html_writer::tag('p', get_string('yourreviewsinfo', 'recommend'));
         echo html_writer::table($table);
     }
     if ($manager->can_add_request()) {
         $addrequesturl = new moodle_url($viewurl, ['action' => 'addrequest']);
+        /* GCHLOL
         echo html_writer::div(html_writer::link($addrequesturl,
                 get_string('addrequest', 'recommend')), 'addrequest');
+        */
+        echo $OUTPUT->single_button($addrequesturl, get_string('addrequest', 'recommend'));
     }
-    if ($manager->can_view_requests()) {
-        $table = $manager->get_all_requests_table();
-        echo $OUTPUT->heading(get_string('allrequests', 'mod_recommend'), 3);
+    if ($manager->can_view_staff_requests()) {
+        $table = $manager->get_my_requests_table();
+        echo $OUTPUT->heading(get_string('myrequests', 'mod_recommend'), 3);
+        echo html_writer::tag('p', get_string('yourstaffinfo', 'recommend'));
         echo html_writer::table($table);
+    }
+    // GCHLOL
+    if (has_capability('moodle/course:viewhiddensections', context_module::instance($id))) {
+        if ($manager->can_view_requests()) {
+            $table = $manager->get_all_requests_table();
+            echo $OUTPUT->heading(get_string('allrequests', 'mod_recommend'), 3);
+            echo html_writer::tag('p', get_string('allrequestsinfo', 'recommend'));
+            echo html_writer::table($table);
+        }
     }
 }
 

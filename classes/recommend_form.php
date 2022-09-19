@@ -87,7 +87,7 @@ class mod_recommend_recommend_form extends moodleform {
         }
 
         if ($this->mode == self::MODE_FILL) {
-            $this->add_action_buttons(false);
+            $this->add_action_buttons(false, 'Submit'); // GCHLOL
         }
 
         if ($data) {

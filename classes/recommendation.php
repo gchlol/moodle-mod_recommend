@@ -170,8 +170,13 @@ class mod_recommend_recommendation {
      * Shows a request with or without completed recommendation
      */
     public function show_request() {
-        global $DB, $OUTPUT, $CFG;
+        global $DB, $OUTPUT, $CFG, $USER;
         require_once($CFG->dirroot.'/comment/lib.php');
+
+        if ($USER->id != $this->request->userid && $this->request->status == 5) {
+            require_capability('moodle/course:viewhiddensections', context_module::instance($this->cm->id));
+        }
+
         // TODO renderer/template.
         echo $OUTPUT->user_picture($this->user);
         echo fullname($this->user).'<br>';
@@ -219,8 +224,7 @@ class mod_recommend_recommendation {
                 $rejectbutton = new single_button($urlreject, get_string('rejectrecommendation', 'mod_recommend'));
                 $rejectbutton->add_confirm_action(get_string('areyousure_reject_recommendation', 'mod_recommend'));
                 echo '<hr>' . html_writer::div(
-                        $OUTPUT->single_button($urlaccept, get_string('acceptrecommendation', 'mod_recommend')) .
-                        $OUTPUT->render($rejectbutton));
+                        $OUTPUT->single_button($urlaccept, get_string('acceptrecommendation', 'mod_recommend')));
             }
 
             if (has_capability('mod/recommend:delete', $this->cm->context)) {
@@ -328,7 +332,8 @@ class mod_recommend_recommendation {
      *     user instead of affected user. Do not call uservisible!
      */
     public static function notify($request, $cm) {
-
+	global $CFG, $DB;
+	require_once("$CFG->dirroot/user/profile/lib.php");
         $context = $cm->context;
         $contextname = $cm->get_formatted_name();
         $course = $cm->get_course();
@@ -368,7 +373,7 @@ class mod_recommend_recommendation {
         $eventdata->smallmessage        = $smallmessage;
         $eventdata->contexturl          = $cm->url->out(false);
         $eventdata->contexturlname      = $contextname;
-        $mailresult = message_send($eventdata);
+// GCH PB Don't send notification to staff on changes (email overload)        $mailresult = message_send($eventdata);
 
         // Send notification to teachers about completed recommendation.
 
@@ -376,8 +381,16 @@ class mod_recommend_recommendation {
             // Teachers only need notification when recommendation is completed.
             return;
         }
-
-        $recipients = get_enrolled_users($context, 'mod/recommend:accept');
+/*GCH PB need to get just LM, not all who can accept recommendation 
+        $recipients = get_enrolled_users($context, 'mod/recommend:accept'); */
+		profile_load_data($user);
+		$recipients = $DB->get_records_sql('
+		SELECT *
+		FROM {user} u
+		INNER JOIN {user_info_data} uid
+		ON u.id=uid.userid AND uid.fieldid= ? AND uid.data = ? AND uid.data <> "" AND uid.data IS NOT NULL
+		', array(8,$user->profile_field_reportsto));
+		
         if (!$recipients) {
             return;
         }
@@ -386,7 +399,7 @@ class mod_recommend_recommendation {
             'requestid' => $request->id, 'action' => 'viewrequest']);
         $a->link = $viewurl->out(false);
 
-        foreach ($recipients as $recipient) {
+	 foreach ($recipients as $recipient) {
             $a->recipient = fullname($recipient);
 
             $subject = get_string('notificationcompleted_subject', 'mod_recommend', $a);
@@ -406,7 +419,7 @@ class mod_recommend_recommendation {
             $eventdata->smallmessage        = $smallmessage;
             $eventdata->contexturl          = $viewurl->out(false);
             $eventdata->contexturlname      = $contextname;
-            $mailresult = message_send($eventdata);
+            // $mailresult = message_send($eventdata);
         }
     }
 }
