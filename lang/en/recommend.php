@@ -115,6 +115,7 @@ $string['recommend:delete'] = 'Delete any request or recommendation';
 $string['recommend:editquestions'] = 'Edit questions in the recommendation';
 $string['recommend:request'] = 'Request new recommendation';
 $string['recommend:viewdetails'] = 'View the recommendation details (requested and completed)';
+$string['recommend:viewstaffdetails'] = 'View staff details';
 $string['recommendationaccepted'] = 'Recommendation accepted';
 $string['recommendationfor'] = 'Recommendation for {$a}';
 $string['recommendationrejected'] = 'Recommendation rejected';
