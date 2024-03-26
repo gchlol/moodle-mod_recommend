@@ -425,19 +425,24 @@ function recommend_pluginfile($course, $cm, $context, $filearea, array $args, $f
 /* Navigation API */
 
 /**
- * Extends the settings navigation with the recommend settings
+ * Adds module specific settings to the settings block.
  *
- * This function is called when the context for the page is a recommend module. This is not called by AJAX
- * so it is safe to rely on the $PAGE.
- *
- * @param settings_navigation $settingsnav complete settings navigation tree
- * @param navigation_node $recommendnode recommend administration node
+ * @param settings_navigation $settings Settings navigation object.
+ * @param navigation_node $navigation Node to add module settings to.
+ * @return void
+ * @throws coding_exception
+ * @throws moodle_exception
+ * @noinspection PhpUnused
  */
-function recommend_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $recommendnode=null) {
-    global $PAGE;
-    if (has_capability('mod/recommend:editquestions', $PAGE->cm->context)) {
-        $url = new moodle_url('/mod/recommend/edit.php', array('id' => $PAGE->cm->id));
-        $recommendnode->add(get_string('editquestions', 'mod_recommend'), $url,
+function recommend_extend_settings_navigation(settings_navigation $settings, navigation_node $navigation): void {
+    $cm = $settings->get_page()->cm;
+    if (!$cm) {
+        return;
+    }
+
+    if (has_capability('mod/recommend:editquestions', $cm->context)) {
+        $url = new moodle_url('/mod/recommend/edit.php', array('id' => $cm->id));
+        $navigation->add(get_string('editquestions', 'mod_recommend'), $url,
                 navigation_node::TYPE_SETTING);
     }
 }
@@ -476,7 +481,7 @@ function recommend_comment_permissions($params) {
     if ($params['commentarea'] === 'recommend_request') {
         $request = $DB->get_record('recommend_request', ['id' => $params['itemid']]);
         if ($request) {
-            list($course, $cm) = get_course_and_cm_from_instance($request->recommendid, 'recommend');
+            [$course, $cm] = get_course_and_cm_from_instance($request->recommendid, 'recommend');
             $caps = ['mod/recommend:viewdetails', 'mod/recommend:accept'];
             if (has_any_capability($caps, $cm->context) && can_access_course($course) && $cm->uservisible) {
                 $canview = $canpost = true;
@@ -522,7 +527,7 @@ function recommend_get_completion_state($course, $cm, $userid, $type) {
         if (empty($recommend->completiononlyaccepted)) {
             $statuses[] = mod_recommend_request_manager::STATUS_RECOMMENDATION_COMPLETED;
         }
-        list($statussql, $params) = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
+        [$statussql, $params] = $DB->get_in_or_equal($statuses, SQL_PARAMS_NAMED);
         $params['recommendid'] = $recommend->id;
         $params['userid'] = $userid;
         $count = $DB->get_field_sql('SELECT COUNT(id) FROM {recommend_request} '
