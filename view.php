@@ -129,12 +129,6 @@ $PAGE->set_heading(format_string($course->fullname));
 // Output starts here.
 echo $OUTPUT->header();
 
-echo $OUTPUT->heading($title);
-
-// Conditions to show the intro can change to look for own settings or whatever.
-if ($recommend->intro && !$action) {
-    echo $OUTPUT->box(format_module_intro('recommend', $recommend, $cm->id), 'generalbox mod_introbox', 'recommendintro');
-}
 if (!$action) {
     if (!has_capability('mod/recommend:editquestions', $PAGE->context)) {
         $previewurl = new moodle_url('/mod/recommend/preview.php', ['id' => $cm->id]);
